@@ -72,4 +72,17 @@ pub fn build(b: *std.Build) void {
     benchmark_main.installHeadersDirectory(benchmark_dep.path("include"), ".", .{});
     benchmark_main.linkLibCpp();
     b.installArtifact(benchmark_main);
+
+    const sample_exe = b.addExecutable(.{
+        .name = "sample",
+        .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
+    });
+    sample_exe.root_module.addCSourceFiles(.{ .files = &.{"src/bm.cpp"} });
+    sample_exe.linkLibrary(benchmark);
+    sample_exe.linkLibrary(benchmark_main);
+
+    const sample_step = b.step("sample", "Run sample benchmark");
+    const sample_cmd = b.addRunArtifact(sample_exe);
+    sample_cmd.addArgs(&.{"--benchmark_min_time=0s"}); // run the benchmark only once
+    sample_step.dependOn(&sample_cmd.step);
 }
