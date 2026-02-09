@@ -1,6 +1,12 @@
 .{
     .name = .benchmark,
-    .version = "0.0.1",
+    .version = "1.9.5",
+    .dependencies = .{
+        .benchmark = .{
+            .url = "https://github.com/google/benchmark/archive/refs/tags/v1.9.5.tar.gz",
+            .hash = "N-V-__8AAAzZEACOMvQYxlYs314zKF5QRYuHDO1DIIM41YBT",
+        },
+    },
     .minimum_zig_version = "0.15.2",
     .paths = .{""},
     .fingerprint = 0xb70c48fe55d5d462,
