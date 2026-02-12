@@ -5,14 +5,14 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const benchmark_dep = b.dependency("benchmark", .{});
+    const upstream = b.dependency("benchmark", .{});
 
     const benchmark = b.addLibrary(.{
         .name = "benchmark",
         .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
     });
     benchmark.root_module.addCSourceFiles(.{
-        .root = benchmark_dep.path("src"),
+        .root = upstream.path("src"),
         .files = &.{
             "benchmark.cc",
             "benchmark_api_internal.cc",
@@ -54,8 +54,8 @@ pub fn build(b: *std.Build) void {
     }
     benchmark.root_module.addCMacro("BENCHMARK_STATIC_DEFINE", "1");
     benchmark.root_module.addCMacro("BENCHMARK_VERSION", "\"" ++ zon.version ++ "\"");
-    benchmark.root_module.addIncludePath(benchmark_dep.path("include"));
-    benchmark.installHeadersDirectory(benchmark_dep.path("include"), ".", .{});
+    benchmark.root_module.addIncludePath(upstream.path("include"));
+    benchmark.installHeadersDirectory(upstream.path("include"), ".", .{});
     benchmark.linkLibCpp();
     b.installArtifact(benchmark);
 
@@ -64,12 +64,12 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
     });
     benchmark_main.root_module.addCSourceFiles(.{
-        .root = benchmark_dep.path("src"),
+        .root = upstream.path("src"),
         .files = &.{"benchmark_main.cc"},
         .flags = &.{"-std=c++17"},
     });
-    benchmark_main.root_module.addIncludePath(benchmark_dep.path("include"));
-    benchmark_main.installHeadersDirectory(benchmark_dep.path("include"), ".", .{});
+    benchmark_main.root_module.addIncludePath(upstream.path("include"));
+    benchmark_main.installHeadersDirectory(upstream.path("include"), ".", .{});
     benchmark_main.linkLibCpp();
     b.installArtifact(benchmark_main);
 
