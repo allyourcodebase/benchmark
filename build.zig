@@ -36,16 +36,9 @@ pub fn build(b: *std.Build) void {
         },
         .flags = &.{ "-std=c++17", "-fstrict-aliasing" },
     });
-    switch (target.result.os.tag) {
-        .wasi => {},
-        .windows => benchmark.linkSystemLibrary("shlwapi"),
-        .linux => {
-            benchmark.linkSystemLibrary("pthread");
-            benchmark.linkSystemLibrary("rt");
-            benchmark.root_module.addCMacro("BENCHMARK_HAS_PTHREAD_AFFINITY", "1");
-        },
-        .solaris => benchmark.linkSystemLibrary("kstat"),
-        else => benchmark.linkSystemLibrary("pthread"),
+    if (target.result.os.tag == .windows) benchmark.linkSystemLibrary("shlwapi");
+    if (target.result.os.tag == .linux) {
+        benchmark.root_module.addCMacro("BENCHMARK_HAS_PTHREAD_AFFINITY", "1");
     }
     if (target.result.os.tag != .windows) {
         benchmark.root_module.addCMacro("_FILE_OFFSET_BITS", "64");
@@ -57,6 +50,7 @@ pub fn build(b: *std.Build) void {
     benchmark.root_module.addIncludePath(upstream.path("include"));
     benchmark.installHeadersDirectory(upstream.path("include"), ".", .{});
     benchmark.linkLibCpp();
+
     b.installArtifact(benchmark);
 
     const benchmark_main = b.addLibrary(.{
