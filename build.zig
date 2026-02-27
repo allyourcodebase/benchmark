@@ -7,8 +7,11 @@ pub fn build(b: *std.Build) void {
 
     const upstream = b.dependency("benchmark", .{});
 
+    const shared_lib = target.result.os.tag == .windows;
+
     const benchmark = b.addLibrary(.{
         .name = "benchmark",
+        .linkage = if (shared_lib) .dynamic else .static,
         .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
     });
     benchmark.root_module.addCSourceFiles(.{
@@ -45,7 +48,11 @@ pub fn build(b: *std.Build) void {
         benchmark.root_module.addCMacro("_LARGEFILE64_SOURCE", "1");
         benchmark.root_module.addCMacro("_LARGEFILE_SOURCE", "1");
     }
-    benchmark.root_module.addCMacro("BENCHMARK_STATIC_DEFINE", "1");
+    if (shared_lib) {
+        benchmark.root_module.addCMacro("benchmark_EXPORTS", "1");
+    } else {
+        benchmark.root_module.addCMacro("BENCHMARK_STATIC_DEFINE", "1");
+    }
     benchmark.root_module.addCMacro("BENCHMARK_VERSION", "\"" ++ zon.version ++ "\"");
     benchmark.root_module.addIncludePath(upstream.path("include"));
     benchmark.installHeadersDirectory(upstream.path("include"), ".", .{});
@@ -55,6 +62,7 @@ pub fn build(b: *std.Build) void {
 
     const benchmark_main = b.addLibrary(.{
         .name = "benchmark_main",
+        .linkage = if (shared_lib) .dynamic else .static,
         .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
     });
     benchmark_main.root_module.addCSourceFiles(.{
@@ -62,9 +70,7 @@ pub fn build(b: *std.Build) void {
         .files = &.{"benchmark_main.cc"},
         .flags = &.{"-std=c++17"},
     });
-    benchmark_main.root_module.addIncludePath(upstream.path("include"));
-    benchmark_main.installHeadersDirectory(upstream.path("include"), ".", .{});
-    benchmark_main.linkLibCpp();
+    benchmark_main.linkLibrary(benchmark);
     b.installArtifact(benchmark_main);
 
     const sample_exe = b.addExecutable(.{
