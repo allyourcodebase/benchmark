@@ -12,7 +12,7 @@ pub fn build(b: *std.Build) void {
     const benchmark = b.addLibrary(.{
         .name = "benchmark",
         .linkage = if (shared_lib) .dynamic else .static,
-        .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
+        .root_module = b.createModule(.{ .target = target, .optimize = optimize, .link_libcpp = true }),
     });
     benchmark.root_module.addCSourceFiles(.{
         .root = upstream.path("src"),
@@ -39,7 +39,7 @@ pub fn build(b: *std.Build) void {
         },
         .flags = &.{ "-std=c++17", "-fstrict-aliasing" },
     });
-    if (target.result.os.tag == .windows) benchmark.linkSystemLibrary("shlwapi");
+    if (target.result.os.tag == .windows) benchmark.root_module.linkSystemLibrary("shlwapi", .{});
     if (target.result.os.tag == .linux) {
         benchmark.root_module.addCMacro("BENCHMARK_HAS_PTHREAD_AFFINITY", "1");
     }
@@ -56,7 +56,6 @@ pub fn build(b: *std.Build) void {
     benchmark.root_module.addCMacro("BENCHMARK_VERSION", "\"" ++ zon.version ++ "\"");
     benchmark.root_module.addIncludePath(upstream.path("include"));
     benchmark.installHeadersDirectory(upstream.path("include"), ".", .{});
-    benchmark.linkLibCpp();
 
     b.installArtifact(benchmark);
 
@@ -70,7 +69,7 @@ pub fn build(b: *std.Build) void {
         .files = &.{"benchmark_main.cc"},
         .flags = &.{"-std=c++17"},
     });
-    benchmark_main.linkLibrary(benchmark);
+    benchmark_main.root_module.linkLibrary(benchmark);
     b.installArtifact(benchmark_main);
 
     const sample_exe = b.addExecutable(.{
@@ -78,8 +77,8 @@ pub fn build(b: *std.Build) void {
         .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
     });
     sample_exe.root_module.addCSourceFiles(.{ .files = &.{"src/bm.cpp"} });
-    sample_exe.linkLibrary(benchmark);
-    sample_exe.linkLibrary(benchmark_main);
+    sample_exe.root_module.linkLibrary(benchmark);
+    sample_exe.root_module.linkLibrary(benchmark_main);
 
     const sample_step = b.step("sample", "Run sample benchmark");
     const sample_cmd = b.addRunArtifact(sample_exe);
