@@ -24,7 +24,7 @@ const benchmarks_exe = b.addExecutable(.{
     .root_module = b.createModule(.{ .target = target, .optimize = optimize }),
 });
 benchmarks_exe.addCSourceFiles(.{ .files = &.{"src/bm.cpp"} }); // your benchmark files
-benchmarks_exe.linkLibrary(googletest_dep.artifact("benchmark"));
+benchmarks_exe.linkLibrary(benchmark_dep.artifact("benchmark"));
 // Unless you define your an entry point (i.e. `BENCHMARK_MAIN()`), you need `benchmark_main` too.
-benchmarks_exe.linkLibrary(googletest_dep.artifact("benchmark_main"));
+benchmarks_exe.linkLibrary(benchmark_dep.artifact("benchmark_main"));
 ```
